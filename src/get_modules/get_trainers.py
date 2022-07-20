@@ -14,6 +14,9 @@ from trainers.forgetting_monoconvbert4kt_plus_trainer import ForgettingMonoConvB
 from trainers.monaconvbert4kt_plus_pt_trainer import MonaConvBert4ktPlusPastTrialTrainer
 from trainers.monaconvbert4kt_plus_diff_trainer import MonaConvBert4ktPlusDiffTrainer
 from trainers.monaconvbert4kt_plus_diff_pt_trainer import MonaConvBert4ktPlusDiffPtTrainer
+from trainers.convbert4kt_plus_diff_trainer import ConvBert4ktPlusDiffTrainer
+from trainers.monabert4kt_plus_diff_trainer import MonaBert4ktPlusDiffTrainer
+from trainers.bert4kt_plus_diff_trainer import Bert4ktPlusDiffTrainer
 
 def get_trainers(model, optimizer, device, num_q, crit, config):
 
@@ -200,6 +203,42 @@ def get_trainers(model, optimizer, device, num_q, crit, config):
         )
     elif config.model_name == "monaconvbert4kt_plus_diff_pt":
         trainer = MonaConvBert4ktPlusDiffPtTrainer(
+            model=model,
+            optimizer=optimizer,
+            n_epochs=config.n_epochs,
+            device=device,
+            num_q=num_q,
+            crit=crit,
+            max_seq_len=config.max_seq_len,
+            grad_acc=config.grad_acc,
+            grad_acc_iter=config.grad_acc_iter
+        )
+    elif config.model_name == "convbert4kt_plus_diff":
+        trainer = ConvBert4ktPlusDiffTrainer(
+            model=model,
+            optimizer=optimizer,
+            n_epochs=config.n_epochs,
+            device=device,
+            num_q=num_q,
+            crit=crit,
+            max_seq_len=config.max_seq_len,
+            grad_acc=config.grad_acc,
+            grad_acc_iter=config.grad_acc_iter
+        )
+    elif config.model_name == "monabert4kt_plus_diff":
+        trainer = MonaBert4ktPlusDiffTrainer(
+            model=model,
+            optimizer=optimizer,
+            n_epochs=config.n_epochs,
+            device=device,
+            num_q=num_q,
+            crit=crit,
+            max_seq_len=config.max_seq_len,
+            grad_acc=config.grad_acc,
+            grad_acc_iter=config.grad_acc_iter
+        )
+    elif config.model_name == "bert4kt_plus_diff":
+        trainer = Bert4ktPlusDiffTrainer(
             model=model,
             optimizer=optimizer,
             n_epochs=config.n_epochs,
