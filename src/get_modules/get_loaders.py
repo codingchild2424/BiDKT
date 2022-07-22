@@ -6,6 +6,8 @@ from dataloaders.algebra2005_loader import ALGEBRA2005
 from dataloaders.algebra2006_loader import ALGEBRA2006
 from dataloaders.slepemapy_loader import SLEPEMAPY
 from dataloaders.ednet_loader import EDNET
+from dataloaders.ednet_pid_loader import EDNET_PID
+from dataloaders.ednet_pid_diff_loader import EDNET_PID_DIFF
 from dataloaders.assist2017_loader import ASSIST2017
 from dataloaders.statics_loader import STATICS
 from dataloaders.assist2009_pid_loader import ASSIST2009_PID
@@ -137,6 +139,13 @@ def get_loaders(config, idx=None):
         num_pid = dataset.num_pid
         num_diff = None
         collate = pid_collate_fn
+    elif config.dataset_name == "ednet_pid":
+        dataset = EDNET_PID(config.max_seq_len)
+        num_q = dataset.num_q
+        num_r = dataset.num_r
+        num_pid = dataset.num_pid
+        num_diff = None
+        collate = pid_collate_fn
     elif config.dataset_name == "algebra2005_pid_time":
         dataset = ALGEBRA2005_PID_Time(config.max_seq_len)
         num_q = dataset.num_q
@@ -196,6 +205,13 @@ def get_loaders(config, idx=None):
         collate = pid_diff_collate_fn
     elif config.dataset_name == "algebra2006_pid_diff":
         dataset = ALGEBRA2006_PID_DIFF(config.max_seq_len)
+        num_q = dataset.num_q
+        num_r = dataset.num_r
+        num_pid = dataset.num_pid
+        num_diff = dataset.num_diff
+        collate = pid_diff_collate_fn
+    elif config.dataset_name == "ednet_pid_diff":
+        dataset = EDNET_PID_DIFF(config.max_seq_len)
         num_q = dataset.num_q
         num_r = dataset.num_r
         num_pid = dataset.num_pid

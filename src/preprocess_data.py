@@ -458,46 +458,90 @@ def prepare_ednet(max_user_num, min_user_inter_num,  remove_nan_skills) :
     files = os.listdir(folder)
 
     df = None
-    cnt_num = 0
-    for f in files:
-        print(cnt_num,"\t",f)
-        if cnt_num > max_user_num:
-            break
-        cnt_num += 1
+    cnt_num = 1
 
-        user_df = pd.read_csv(os.path.join(folder,f))
-        if len(user_df) < min_user_inter_num:
-            continue
+    if not os.path.isfile(os.path.join(data_path, "temp.csv")) :
+        for f in files:
+            if cnt_num > max_user_num:
+                break
 
-        user_df['user_id'] = re.sub(r'[^0-9]', '', f)
+            user_df = pd.read_csv(os.path.join(folder,f))
+            if len(user_df) < min_user_inter_num:
+                continue
+            
+            print(cnt_num,"\t",f)
+            cnt_num += 1
+            user_df['user_id'] = re.sub(r'[^0-9]', '', f)
 
-        correct_ans = []
-        tags = []
-        for i in range(len(user_df)):
-            tmp_ans = question_df[question_df['question_id'] == user_df['question_id'][i]]['correct_answer'].values[0]
-            tmp_tags = question_df[question_df['question_id'] == user_df['question_id'][i]]['tags'].values[0]
-            correct_ans.append(tmp_ans)
-            tags.append(tmp_tags)
-        user_df['correct_answer'] = correct_ans
-        user_df['skill_id'] = tags
+            correct_ans = []
+            tags = []
+            for i in range(len(user_df)):
+                tmp_ans = question_df[question_df['question_id'] == user_df['question_id'][i]]['correct_answer'].values[0]
+                tmp_tags = question_df[question_df['question_id'] == user_df['question_id'][i]]['tags'].values[0]
+                correct_ans.append(tmp_ans)
+                tags.append(tmp_tags)
+            user_df['correct_answer'] = correct_ans
+            user_df['tags'] = tags
 
-        correct = []
-        for i in range(len(user_df)):
-            tmp = int(user_df['correct_answer'][i] == user_df['user_answer'][i])
-            correct.append(tmp)
-        user_df['correct'] = correct
+            correct = []
+            for i in range(len(user_df)):
+                tmp = int(user_df['correct_answer'][i] == user_df['user_answer'][i])
+                correct.append(tmp)
+            user_df['correct'] = correct
+            # Sort data temporally
+            user_df.sort_values(by="timestamp", inplace=True)
 
-        if cnt_num == 1 : 
-            df = user_df
-        else :
-            df = pd.concat([df, user_df], axis = 0) 
+            if cnt_num == 1 : 
+                df = user_df
+            else :
+                df = pd.concat([df, user_df], axis = 0) 
+
+        df.to_csv(
+            os.path.join(data_path, "temp.csv"), sep="\t", index=False
+        )
     
+    else : 
+        df = pd.read_csv(os.path.join(data_path, "temp.csv"), sep="\t")
+
+    # convert qustion_id to int    
+    df['question_id'] = df['question_id'].str[1:].astype(int)
+    df = df.reset_index(drop=True)
     # print(df)
     if remove_nan_skills :    
-        print('original question number: ', len(df))
-        df.drop(index=df[df['skill_id']=='-1'].index, inplace=True)
-        print('remove non-skill, question number: ', len(df))
-    
+        print('original log number: ', len(df))
+        df.drop(index=df[df['tags']=='-1'].index, inplace=True)
+        print('remove non-skill, log number: ', len(df))
+        df = df.reset_index(drop=True)
+
+    # Extract KCs
+    kc_list = []
+    for kc_str in df["tags"].unique():
+        for kc in kc_str.split(";"):
+            kc_list.append(kc)
+    kc_set = set(kc_list)
+    kc2idx = {kc: i for i, kc in enumerate(kc_set)}
+
+    # question mapping
+    q_list = []
+    for qid in df["question_id"].unique():
+        q_list.append(qid)
+    q2idx = {q: i for i, q in enumerate(q_list)}
+
+    # Build Q-matrix
+    Q_mat = np.zeros((len(df["question_id"].unique()), len(kc_set)))
+    for item_id, kc_str in df[["question_id", "tags"]].values:
+        for kc in kc_str.split(";"):
+            Q_mat[q2idx[item_id], kc2idx[kc]] = 1
+
+    # Get unique skill id from combination of all skill ids
+    unique_skill_ids = np.unique(Q_mat, axis=0, return_inverse=True)[1]
+    df['skill_id'] = df['tags']
+    # df["skill_id"] = unique_skill_ids[df["question_id"]]
+    for i in range(len(df)) : 
+        df["skill_id"][i] = unique_skill_ids[q2idx[df["question_id"][i]]]
+
+    print("# Preprocessed Skills: {}".format(df["skill_id"].nunique()))
+
     df.rename(columns = {'question_id':'item_id'},inplace=True)
     df_final = df[['user_id','item_id','timestamp','correct','skill_id']]
     df_final.to_csv(
@@ -507,7 +551,7 @@ def prepare_ednet(max_user_num, min_user_inter_num,  remove_nan_skills) :
 if __name__ == "__main__":
     parser = ArgumentParser(description="Preprocess DKT datasets")
     parser.add_argument("--data_name", type=str, default="assistments09")
-    parser.add_argument("--max_user_num", type=int, default=784309)
+    parser.add_argument("--max_user_num", type=int, default=5000)     #default=784309
     parser.add_argument("--min_user_inter_num", type=int, default=5)
     parser.add_argument("--remove_nan_skills", default=True, action="store_true")
     args = parser.parse_args()
