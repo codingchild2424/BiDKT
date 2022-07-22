@@ -17,6 +17,7 @@ from models.monaconvbert4kt_plus_diff_pt import MonaConvBert4ktPlusDiffPt
 from models.convbert4kt_plus_diff import ConvBert4ktPlusDiff
 from models.monabert4kt_plus_diff import MonaBert4ktPlusDiff
 from models.bert4kt_plus_diff import Bert4ktPlusDiff
+from models.monaconvbert4kt_rasch import MonaConvBert4ktRasch
 
 # get models
 def get_models(num_q, num_r, num_pid, num_diff, device, config):
@@ -179,6 +180,20 @@ def get_models(num_q, num_r, num_pid, num_diff, device, config):
     # this model is main model of ours
     elif config.model_name == "monaconvbert4kt_plus":
         model = MonaConvBert4ktPlus(
+            num_q=num_q,
+            num_r=num_r,
+            num_pid=num_pid,
+            hidden_size=config.hidden_size,
+            output_size=config.output_size,
+            num_head=config.num_head,
+            num_encoder=config.num_encoder,
+            max_seq_len=config.max_seq_len,
+            device=device,
+            use_leakyrelu=config.use_leakyrelu,
+            dropout_p=config.dropout_p
+        ).to(device)
+    elif config.model_name == "monaconvbert4kt_rasch":
+        model = MonaConvBert4ktRasch(
             num_q=num_q,
             num_r=num_r,
             num_pid=num_pid,
